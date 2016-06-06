@@ -29,7 +29,7 @@ def find_version(*file_paths):
 
 setup(
     name='python-stack-cli',
-    version=find_version('stack', '__init__.py'),
+    version=find_version('stack_cli', '__init__.py'),
     url='http://python-stack.readthedocs.io',
     description='`stack` is a Python version of [stack](http://docs.haskellstack.org/en/stable/README/),',
     author='Ryan Kung',
@@ -47,7 +47,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules"
     ],
     entry_points={'console_scripts': [
-        'stack = stack.main:main',
-        'pystack = stack.main:main'
+        'stack = stack_cli.main:main',
+        'pystack = stack_cli.main:main'
     ]}
 )
