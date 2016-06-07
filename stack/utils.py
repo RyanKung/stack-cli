@@ -31,7 +31,11 @@ def get_env() -> str:
     '''
     Get virtualenv path
     '''
-    return os.environ.get('VIRTUAL_ENV', '')
+    env = os.environ.get('VIRTUAL_ENV', '')
+    if env:
+        return env + '/bin/'
+    else:
+        return ''
 
 
 def check_exec(e: str) -> bool:
