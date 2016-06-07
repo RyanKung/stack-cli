@@ -7,6 +7,7 @@ from runpy import run_path
 from typing import Callable
 from . import parser, subparsers, as_command, __version__
 from .utils import get_env
+from .wsh.main import client, server
 
 __all__ = ['router', 'main']
 
@@ -68,6 +69,21 @@ def version(args) -> None:
     print(__version__)
 
 
+@as_command
+def wsh(args) -> None:
+    '''
+    Run websocket based server
+    @argument --server, metavar=server, help=run as server
+    @argument --client, metavar=client, help=run as client
+    @argument --host, metavar=host
+    @argument --port, metavar=port
+    '''
+    if args.server:
+        return server(host=args.host, port=args.port)
+    if args.client:
+        return client(host=args.host, port=args.port)
+
+
 def router(pattern: dict, argv: list) -> Callable:
     '''
     Match function from funtion_hash_dict
@@ -83,7 +99,7 @@ def router(pattern: dict, argv: list) -> Callable:
 
 
 def main(argv: list=sys.argv,
-         pattern: dict={'fab': fab, 'version': version},
+         pattern: dict={'fab': fab, 'version': version, 'wsh': wsh},
          allow: tuple=('stackfile', 'execfile'),
          stackfile: str='stackfile.py') -> None:
     '''

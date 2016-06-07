@@ -29,8 +29,8 @@ from argparse import ArgumentParser
 
 __all__ = ['__version__', 'parser', 'as_command']
 
-__version__ = '0.1'
-parser = ArgumentParser(description='Stack-cli - The Python Tool Stack-cli')
+__version__ = '0.2.1'
+parser = ArgumentParser(description='Stack-cli - The Python Tool Stack-cli %s' % __version__)
 parser.usage = 'stack [-h]'
 subparsers = parser.add_subparsers(title='Available options:', help='Run `stack COMMAND -h` to get help')
 as_command = partial(as_command_wrapper, parser=subparsers)
