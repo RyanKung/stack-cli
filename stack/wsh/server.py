@@ -4,6 +4,14 @@
 from aiohttp import web
 from typing import Callable
 from functools import partial
+from ..utils import io_echo
+
+
+def out(s: str):
+    '''
+    Show info message with yellow color
+    '''
+    return io_echo("\033[92mOUT: {}\033[00m" .format(s))
 
 
 def command_parser(cmd: str, fns: dict) -> Callable:
@@ -26,7 +34,7 @@ async def wsh(request, handler=print):
     async for msg in ws:
         if msg.tp == web.MsgType.text:
             res = handler(msg.data)
-            ws.send_str("Out: {}".format(res))
+            ws.send_str(out(res))
         elif msg.tp == web.MsgType.binary:
             ws.send_bytes(msg.data)
         elif msg.tp == web.MsgType.close:

@@ -63,16 +63,18 @@ def fab(args) -> None:
     os.system(prefix + 'fab %s' % ' '.join(sys.argv[2:]))
 
 
+@wsh_command
 @as_command
-def version(args) -> None:
+def version(args=None) -> None:
     '''
     Show stack-cli version
     '''
     print(__version__)
+    return __version__
 
 
 @wsh_command
-def ls() -> str:
+def commands() -> str:
     return ','.join(wsh_pattern.keys())
 
 

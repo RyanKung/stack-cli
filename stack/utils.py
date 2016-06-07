@@ -3,28 +3,33 @@
 import os
 import sysconfig
 
-__all__ = ['warn', 'info', 'error', 'get_env', 'check_exec']
+__all__ = ['io_echo', 'warn', 'info', 'error', 'get_env', 'check_exec']
+
+
+def io_echo(s: str):
+    print(s)
+    return s
 
 
 def warn(s: str):
     '''
     Show warning with yellow color
     '''
-    print("\033[93m Warning: {}\033[00m" .format(s))
+    return io_echo("\033[93m Warning: {}\033[00m" .format(s))
 
 
 def info(s: str):
     '''
-    Show info message with yellow color
+    Show info message with green color
     '''
-    print("\033[92m Info: {}\033[00m" .format(s))
+    return io_echo("\033[92m Info: {}\033[00m" .format(s))
 
 
 def error(s: str):
     '''
     show error message with red color
     '''
-    print("\033[91m Error: {}\033[00m" .format(s))
+    return io_echo("\033[91m Error: {}\033[00m" .format(s))
 
 
 def get_env() -> str:
