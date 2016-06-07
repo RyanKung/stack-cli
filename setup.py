@@ -47,6 +47,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules"
     ],
     entry_points={'console_scripts': [
-        'stack-cli = stack_cli.main:main',
+        'stack-cli = stack.main:main',
     ]}
 )

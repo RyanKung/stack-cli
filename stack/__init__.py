@@ -24,13 +24,16 @@
 
 """
 from functools import partial
-from .decorators import as_command_wrapper
+from .decorators import as_command_wrapper, as_wsh_command_wrapper
 from argparse import ArgumentParser
 
-__all__ = ['__version__', 'parser', 'as_command']
+__all__ = ['__version__', 'parser', 'as_command', 'pattern']
 
-__version__ = '0.2.1'
+__version__ = '0.2.1b1'
+pattern = {}
+wsh_pattern = {}
 parser = ArgumentParser(description='Stack-cli - The Python Tool Stack-cli %s' % __version__)
 parser.usage = 'stack [-h]'
 subparsers = parser.add_subparsers(title='Available options:', help='Run `stack COMMAND -h` to get help')
-as_command = partial(as_command_wrapper, parser=subparsers)
+as_command = partial(as_command_wrapper, parser=subparsers, mdict=pattern)
+wsh_command = partial(as_wsh_command_wrapper, mdict=wsh_pattern)

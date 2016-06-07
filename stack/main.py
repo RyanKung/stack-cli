@@ -5,9 +5,11 @@ import sysconfig
 from functools import partial
 from runpy import run_path
 from typing import Callable
-from . import parser, subparsers, as_command, __version__
+from . import parser, subparsers, as_command, wsh_command, __version__, pattern, wsh_pattern
 from .utils import get_env
-from .wsh.main import client, server
+from .wsh.client import main as client
+from .wsh.server import main as server
+
 
 __all__ = ['router', 'main']
 
@@ -69,19 +71,24 @@ def version(args) -> None:
     print(__version__)
 
 
+@wsh_command
+def ls() -> str:
+    return ','.join(wsh_pattern.keys())
+
+
 @as_command
 def wsh(args) -> None:
     '''
     Run websocket based server
-    @argument --server, metavar=server, help=run as server
+    @argument --server, metavar=server, default=1, help=run as server
     @argument --client, metavar=client, help=run as client
-    @argument --host, metavar=host
-    @argument --port, metavar=port
+    @argument --host, metavar=host, default=127.0.0.1, help=host
+    @argument --port, metavar=port, default=8964, help=port
     '''
-    if args.server:
-        return server(host=args.host, port=args.port)
     if args.client:
         return client(host=args.host, port=args.port)
+    if args.server:
+        return server(host=args.host, port=args.port, pattern=wsh_pattern)
 
 
 def router(pattern: dict, argv: list) -> Callable:
@@ -98,10 +105,10 @@ def router(pattern: dict, argv: list) -> Callable:
     return pattern.get(argv[1], fab)(args)
 
 
-def main(argv: list=sys.argv,
-         pattern: dict={'fab': fab, 'version': version, 'wsh': wsh},
-         allow: tuple=('stackfile', 'execfile'),
-         stackfile: str='stackfile.py') -> None:
+def main(argv=sys.argv,
+         pattern=pattern,
+         allow=('stackfile', 'execfile'),
+         stackfile='stackfile.py') -> None:
     '''
     @pattern: dict of registed fns
     @stackfile: the path of stackfile

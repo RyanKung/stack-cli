@@ -70,11 +70,29 @@ def command_argument_paraser(fn: Callable, parser: ArgumentParser) -> list:
     return reduce(add_params, params, command)
 
 
-def as_command_wrapper(fn: Callable, parser: ArgumentParser) -> Callable:
+def command_argument_register(fn: Callable, mdict: dict) -> None:
+    mdict.update({fn.__name__: fn})
+
+
+def as_command_wrapper(fn: Callable, parser: ArgumentParser, mdict={}) -> Callable:
     '''
     mark a function as command
     '''
     command_argument_paraser(fn, parser)
+    command_argument_register(fn, mdict)
+
+    @wraps(fn)
+    def handler(*args: Iterable, **kwargs: dict) -> Callable:
+        return fn(*args, **kwargs)
+
+    return handler
+
+
+def as_wsh_command_wrapper(fn: Callable, mdict={}) -> Callable:
+    '''
+    mark a function as wsh command
+    '''
+    command_argument_register(fn, mdict)
 
     @wraps(fn)
     def handler(*args: Iterable, **kwargs: dict) -> Callable:
