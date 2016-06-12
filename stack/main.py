@@ -7,6 +7,7 @@ from runpy import run_path
 from typing import Callable
 from . import parser, subparsers, as_command, wsh_command, __version__, pattern, wsh_pattern
 from .utils import get_env
+from .decorators import ignore
 from .wsh.client import main as client
 from .wsh.server import main as server
 
@@ -14,15 +15,19 @@ from .wsh.server import main as server
 __all__ = ['router', 'main']
 
 
+@partial(ignore, res={})
+def parse_stackfile(stackfile: str) -> dict:
+    if os.path.exists(stackfile):
+        tasks = run_path(stackfile)
+        return tasks
+
+
 def update_stackfile(pattern: dict, stackfile: str='stackfile.py') -> dict:
     '''
     Check wheather the stackfile exist,
     If exist, update the pattern dict with tasks contained in the stack file
     '''
-    if os.path.exists(stackfile):
-        tasks = run_path(stackfile)
-        pattern.update(tasks)
-        return pattern
+    pattern.update(parse_stackfile())
     return pattern
 
 
@@ -86,11 +91,14 @@ def wsh(args) -> None:
     @argument --client, metavar=client, help=run as client
     @argument --host, metavar=host, default=127.0.0.1, help=host
     @argument --port, metavar=port, default=8964, help=port
+    @argument --project, metavar=project, default=default, help=the project path
     '''
+    if args.project != 'default':
+        parse_stackfile('%s/stackfile.py' % args.project)
     if args.client:
-        return client(host=args.host, port=args.port)
+        return client(host=args.host, port=args.port, project=args.project)
     if args.server:
-        return server(host=args.host, port=args.port, pattern=wsh_pattern)
+        return server(host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
 
 
 def router(pattern: dict, argv: list) -> Callable:
