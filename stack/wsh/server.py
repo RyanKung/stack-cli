@@ -2,6 +2,7 @@
 
 
 from aiohttp import web
+import os
 from aiohttp import MultiDict
 from urllib.parse import parse_qsl
 from typing import Callable
@@ -43,7 +44,6 @@ def io_wrapper(fn: Callable, callback: Callable) -> str:
     del io
     return res, ret
 
-
 async def wsh(request, handler=print, project='default'):
     project = request.match_info.get('project', project)
     ws = web.WebSocketResponse()
@@ -74,4 +74,9 @@ def main(host='127.0.0.1', port='8964', pattern={}, project='default'):
 
 
 if __name__ == '__main__':
-    main()
+    pid = os.fork()
+    if not pid == 0:
+        os.system('echo %s > wsh-daemon.pid' % pid)
+        main()
+    else:
+        sys.exit(1)

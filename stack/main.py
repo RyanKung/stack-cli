@@ -75,7 +75,6 @@ def version(args=None) -> None:
     Show stack-cli version
     '''
     print(__version__)
-    return __version__
 
 
 @wsh_command
@@ -92,13 +91,25 @@ def wsh(args) -> None:
     @argument --host, metavar=host, default=127.0.0.1, help=host
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
+    @argument --daemon, default=1, help=run server with daemo mode
     '''
+    def runserver():
+        return server(host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
+
     if args.project != 'default':
         parse_stackfile('%s/stackfile.py' % args.project)
     if args.client:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
-        return server(host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
+        if bool(int(args.daemon)):
+            pid = os.fork()
+            if not pid:
+                os.system('echo %s > stack-daemon.pid' % os.getpid())
+                return runserver()
+            else:
+                sys.exit(1)
+        else:
+            return runserver()
 
 
 def router(pattern: dict, argv: list) -> Callable:
