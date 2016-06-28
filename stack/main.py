@@ -136,7 +136,7 @@ def main(argv=sys.argv,
     '''
     if 'stackfile' in allow:
         update_stackfile(pattern, stackfile=stackfile)
-    if 'execfile' in allow:
+    if 'execfile' in allow and pattern.get('execfile', True):
         update_execfile(pattern, prefix=get_env())
 
     return router(pattern, argv)
