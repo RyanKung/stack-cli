@@ -27,7 +27,7 @@ def update_stackfile(pattern: dict, stackfile: str='stackfile.py') -> dict:
     Check wheather the stackfile exist,
     If exist, update the pattern dict with tasks contained in the stack file
     '''
-    pattern.update(parse_stackfile())
+    pattern.update(parse_stackfile(stackfile))
     return pattern
 
 
