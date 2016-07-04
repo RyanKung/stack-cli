@@ -20,6 +20,7 @@ def parse_stackfile(stackfile: str) -> dict:
     if os.path.exists(stackfile):
         tasks = run_path(stackfile)
         return tasks
+    return {}
 
 
 def update_stackfile(pattern: dict, stackfile: str='stackfile.py') -> dict:

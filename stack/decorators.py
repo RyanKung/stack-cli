@@ -3,8 +3,35 @@ from functools import reduce, wraps, partial
 from operator import add
 from typing import Callable, Iterable
 from argparse import ArgumentParser
+import asyncio
+from types import coroutine
 
-__all__ = ['ignore', 'as_command_wrapper']
+__all__ = ['ignore', 'as_command_wrapper', 'syncio', 'sync2async']
+
+loop = asyncio.get_event_loop()
+
+
+def syncio(fn, loop):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        return loop.run_until_complete(fn(*args, **kwargs))
+
+    return wrapper
+
+
+def sync2async(fn: Callable) -> coroutine:
+    async def handler(*args, **kwargs):
+        def wrapper(ft: asyncio.Future):
+            print('call wrapper')
+            res = fn(*args, **kwargs)
+            ft.set_result(res)
+            loop.stop()
+        future = asyncio.Future()
+        loop.call_later(0, partial(wrapper, future))
+        return future
+    return handler
+
+syncio = partial(syncio, loop=loop)
 
 
 def ignore(fn: Callable, res=None) -> Callable:
@@ -12,6 +39,7 @@ def ignore(fn: Callable, res=None) -> Callable:
     Ignore any exceptions and return the default value
 
     >>> @partial(ignore, res='')
+
     ... def tester():
     ...    assert True == False
     ...    return
