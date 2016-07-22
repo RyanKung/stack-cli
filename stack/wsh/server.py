@@ -11,6 +11,11 @@ from ..utils import io_echo
 from io import StringIO
 import sys
 
+__all__ = ['router']
+
+app = web.Application()
+router = app.router
+
 
 def out(s: str):
     '''
@@ -57,7 +62,6 @@ async def wsh(request, handler=print, project='default'):
             print('websocket connection closed')
     return ws
 
-
 async def api(request, handler=print, project='default'):
     project = request.match_info.get('project', project)
     data = MultiDict(parse_qsl(request.query_string))
@@ -67,9 +71,8 @@ async def api(request, handler=print, project='default'):
 
 
 def main(host='127.0.0.1', port='8964', pattern={}, project='default'):
-    app = web.Application()
-    app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
-    app.router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
+    router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
+    router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
     web.run_app(app, host=host, port=port)
 
 

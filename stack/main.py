@@ -2,6 +2,7 @@
 import os
 import sys
 import sysconfig
+import multiprocessing
 from functools import partial
 from runpy import run_path
 from typing import Callable
@@ -92,7 +93,7 @@ def wsh(args) -> None:
     @argument --host, metavar=host, default=127.0.0.1, help=host
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
-    @argument --daemon, default=1, help=run server with daemo mode
+    @argument --daemon, default=0, help=run server with daemo mode
     '''
     def runserver():
         return server(host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
@@ -103,12 +104,9 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            pid = os.fork()
-            if not pid:
-                os.system('echo %s > stack-daemon.pid' % os.getpid())
-                return runserver()
-            else:
-                sys.exit(1)
+            p = multiprocessing.Process(target=runserver, daemon=True)
+            p.start()
+            return print('running on pid %s' % p.pid)
         else:
             return runserver()
 
