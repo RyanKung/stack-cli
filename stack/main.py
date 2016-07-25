@@ -2,7 +2,7 @@
 import os
 import sys
 import sysconfig
-import multiprocessing
+from aiohttp import web
 from functools import partial
 from runpy import run_path
 from typing import Callable
@@ -95,8 +95,8 @@ def wsh(args) -> None:
     @argument --project, metavar=project, default=default, help=the project path
     @argument --daemon, default=0, help=run server with daemo mode
     '''
-    def runserver():
-        return server(host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
+
+    runserver = partial(server, host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
 
     if args.project != 'default':
         parse_stackfile('%s/stackfile.py' % args.project)
@@ -104,9 +104,13 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            p = multiprocessing.Process(target=runserver, daemon=True)
-            p.start()
-            return print('running on pid %s' % p.pid)
+            raise NotImplementedError
+            # pid = os.fork()
+            # if not pid:  # child
+            #     app = web.Application()
+            #     return runserver(app=app)
+            # else:
+            #     return
         else:
             return runserver()
 

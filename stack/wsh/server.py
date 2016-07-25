@@ -70,10 +70,11 @@ async def api(request, handler=print, project='default'):
     return ret
 
 
-def main(host='127.0.0.1', port='8964', pattern={}, project='default'):
-    router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
-    router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
-    web.run_app(app, host=host, port=port)
+def main(host='127.0.0.1', port='8964', pattern={}, project='default', app=app):
+    app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
+    app.router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
+    print('running on pid %s' % os.getpid())
+    return web.run_app(app, host=host, port=port)
 
 
 if __name__ == '__main__':
