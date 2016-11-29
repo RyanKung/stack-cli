@@ -2,7 +2,6 @@
 import os
 import sys
 import sysconfig
-from aiohttp import web
 from functools import partial
 from runpy import run_path
 from typing import Callable
@@ -145,4 +144,7 @@ def main(argv=sys.argv,
     return router(pattern, argv)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit(1)

@@ -35,8 +35,10 @@ async def ws_client(session, host='ws://127.0.0.1', port='8964', project='defaul
                         print(msg.data)
                         break
                 elif msg.tp == aiohttp.MsgType.closed:
+                    print(msg)
                     sys.exit(1)
                 elif msg.tp == aiohttp.MsgType.error:
+                    print(msg)
                     sys.exit(0)
     return ws
 

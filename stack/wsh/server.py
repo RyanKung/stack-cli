@@ -40,11 +40,11 @@ def command_parser(cmd: str, fns: dict) -> Callable:
 
 def io_wrapper(fn: Callable, callback: Callable) -> str:
     io = StringIO()
-    sys.stdout = sys.stderr = io
+    sys.stderr = sys.stdout = io
     res = fn() or io.getvalue()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-    ret = callback(out(res))
+    ret = callback(res)
     io.close()
     del io
     return res, ret

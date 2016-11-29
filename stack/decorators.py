@@ -124,7 +124,7 @@ def as_wsh_command_wrapper(fn: Callable, mdict={}) -> Callable:
 
     @wraps(fn)
     def handler(*args: Iterable, **kwargs: dict) -> Callable:
-        return fn(*args, **kwargs)
+        fn(*args, **kwargs)
 
     return handler
 
