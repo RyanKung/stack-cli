@@ -107,8 +107,7 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            with daemon.DaemonContext(pidfile=args.pidfile,
-                                      working_directory=args.working_path):
+            with daemon.DaemonContext(pidfile=args.pidfile):
                 return runserver()
         else:
             return runserver()
