@@ -1,6 +1,7 @@
 # coding: utf8
 import os
 import sys
+import time
 import sysconfig
 import daemon
 import lockfile
@@ -96,6 +97,7 @@ def wsh(args) -> None:
     @argument --project, metavar=project, default=default, help=the project path
     @argument --daemon, default=0, help=run server with daemo mode
     @arugment --working_path, default='./'
+    @argument -v, --verbose, default=0
     @argument --pidfile, default='./daemon.pid'
     '''
 
@@ -107,7 +109,13 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            with daemon.DaemonContext(pidfile=args.pidfile):
+            argv = dict(
+                stderr=sys.stderr,
+                pidfile=lockfile.FileLock(args.pidfile)
+            )
+            if bool(int(args.verbose)):
+                argv.update({'stdout': sys.stdout})
+            with daemon.DaemonContext(**argv):
                 return runserver()
         else:
             return runserver()
