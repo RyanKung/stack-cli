@@ -99,6 +99,7 @@ def wsh(args) -> None:
     @arugment --working_path, default='./'
     @argument -v, --verbose, default=0
     @argument --pidfile, default='./daemon.pid'
+    @argument --logfile, default='0'
     '''
 
     runserver = partial(server, host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
@@ -115,6 +116,10 @@ def wsh(args) -> None:
             )
             if bool(int(args.verbose)):
                 argv.update({'stdout': sys.stdout})
+            if not args.logfile == '0':
+                logfile = open("args.logfile", "r", encoding="utf-8")
+                argv.update({'stderr': logfile})
+                argv.update({'stdout': logfile})
             with daemon.DaemonContext(**argv):
                 return runserver()
         else:
