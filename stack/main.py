@@ -3,6 +3,7 @@ import os
 import sys
 import sysconfig
 import daemon
+import lockfile
 from functools import partial
 from runpy import run_path
 from typing import Callable
@@ -94,6 +95,8 @@ def wsh(args) -> None:
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
     @argument --daemon, default=0, help=run server with daemo mode
+    @arugment --working_path, default='./'
+    @argument --pidfile, default='./daemon.pid'
     '''
 
     runserver = partial(server, host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
@@ -104,8 +107,9 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            with daemon.DaemonContext():
-                runserver()
+            with daemon.DaemonContext(pidfile=args.pidfile,
+                                      working_dictory=args.working_path):
+                return runserver()
         else:
             return runserver()
 

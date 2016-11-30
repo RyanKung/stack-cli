@@ -4,6 +4,7 @@
 from aiohttp import web
 import os
 from aiohttp import MultiDict
+from aiohttp.web_urldispatcher import UrlDispatcher
 from urllib.parse import parse_qsl
 from typing import Callable
 from functools import partial
@@ -13,8 +14,7 @@ import sys
 
 __all__ = ['router']
 
-app = web.Application()
-router = app.router
+router = UrlDispatcher()
 
 
 def out(s: str):
@@ -70,7 +70,8 @@ async def api(request, handler=print, project='default'):
     return ret
 
 
-def main(host='127.0.0.1', port='8964', pattern={}, project='default', app=app):
+def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
+    app = web.Application(router=router)
     app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
     app.router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
     print('running on pid %s' % os.getpid())
@@ -78,9 +79,4 @@ def main(host='127.0.0.1', port='8964', pattern={}, project='default', app=app):
 
 
 if __name__ == '__main__':
-    pid = os.fork()
-    if not pid == 0:
-        os.system('echo %s > wsh-daemon.pid' % pid)
-        main()
-    else:
-        sys.exit(1)
+    main()
