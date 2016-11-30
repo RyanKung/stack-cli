@@ -99,7 +99,7 @@ def wsh(args) -> None:
     @argument --pidfile, default='./daemon.pid'
     '''
 
-    runserver = partial(server, host=args.host, port=args.port, pattern={}, project=args.project)
+    runserver = partial(server, host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
 
     if args.project != 'default':
         parse_stackfile('%s/stackfile.py' % args.project)
