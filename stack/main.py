@@ -2,6 +2,7 @@
 import os
 import sys
 import sysconfig
+import daemon
 from functools import partial
 from runpy import run_path
 from typing import Callable
@@ -103,13 +104,8 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port, project=args.project)
     if args.server:
         if bool(int(args.daemon)):
-            raise NotImplementedError
-            # pid = os.fork()
-            # if not pid:  # child
-            #     app = web.Application()
-            #     return runserver(app=app)
-            # else:
-            #     return
+            with daemon.DaemonContext():
+                runserver()
         else:
             return runserver()
 

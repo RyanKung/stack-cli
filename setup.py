@@ -7,7 +7,9 @@ import sys
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-
+_CWD = os.path.dirname(__file__)
+INSTALL_REQUIRES = [i for i in open(os.path.join(_CWD, 'requirements.txt')).readlines()
+                    if not i.startswith(('-', '#', '\n'))]
 
 if sys.version_info[:2] < (3, 5) and sys.argv[-1] == 'install':
     sys.exit('stack requires python 3.5 or higher')
@@ -33,6 +35,7 @@ setup(
     url='http://python-stack.readthedocs.io',
     description='`stack` is a Python version of [stack](http://docs.haskellstack.org/en/stable/README/),',
     author='Ryan Kung',
+    install_requires=INSTALL_REQUIRES,
     py_modules=find_packages(exclude=['tests', 'docs']),
     packages=find_packages(exclude=['tests', 'docs']),
     package_dir={'': '.'},
