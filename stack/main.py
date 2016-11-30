@@ -108,7 +108,7 @@ def wsh(args) -> None:
     if args.server:
         if bool(int(args.daemon)):
             with daemon.DaemonContext(pidfile=args.pidfile,
-                                      working_dictory=args.working_path):
+                                      working_directory=args.working_path):
                 return runserver()
         else:
             return runserver()
