@@ -2,6 +2,7 @@
 
 
 from aiohttp import web
+import asyncio
 import os
 from aiohttp import MultiDict
 from aiohttp.web_urldispatcher import UrlDispatcher
@@ -71,7 +72,6 @@ async def api(request, handler=print, project='default'):
 
 
 def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
-    import asyncio
     loop = asyncio.get_event_loop()
     app = web.Application(router=router, debug=True, loop=loop)
     app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
