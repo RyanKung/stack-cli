@@ -34,20 +34,33 @@ def command_parser(cmd: str, fns: dict) -> Callable:
     '''
     args = cmd.strip().split(' ')
     fn_name = args[0]
-    args = [i for i in args[1:] if not i.startswith('-')]
-    kwargs = dict([i.replace('-', '').split('=') for i in args[1:] if i.startswith('-')])
-    return partial(fns.get(fn_name, lambda: 'None'), *args, **kwargs)
+    fn = fns.get(fn_name, None)
+    if not fn:
+        return partial(lambda: print(NotImplemented))
+
+    if fn.strict:
+        args = [i for i in args[1:] if not i.startswith('-')]
+        kwargs = dict([i.replace('-', '').split('=') for i in args[1:] if i.startswith('-')])
+        return partial(fns.get(fn_name, lambda: 'None'), *args, **kwargs)
+    else:
+        args = args[1:]
+#        kwargs = dict([i.split('=') for i in args[1:]])
+        return partial(fn, *args)
 
 
 def io_wrapper(fn: Callable, callback: Callable) -> str:
-    io = StringIO()
-    sys.stderr = sys.stdout = io
-    res = fn() or io.getvalue()
+    outio = StringIO()
+    errio = StringIO()
+    sys.stderr = errio
+    sys.stdout = outio
+    res = fn() or outio.getvalue() + errio.getvalue()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     ret = callback(res)
-    io.close()
-    del io
+    outio.close()
+    errio.close()
+    del outio
+    del errio
     return res, ret
 
 async def wsh(request, handler=print, project='default'):
@@ -56,7 +69,10 @@ async def wsh(request, handler=print, project='default'):
     await ws.prepare(request)
     async for msg in ws:
         if msg.tp == web.MsgType.text:
-            io_wrapper(handler(msg.data), callback=ws.send_str)
+            try:
+                io_wrapper(handler(msg.data), callback=ws.send_str)
+            except Exception as ex:
+                io_wrapper(partial(print, ex), callback=ws.send_str)
         elif msg.tp == web.MsgType.binary:
             ws.send_bytes(msg.data)
         elif msg.tp == web.MsgType.close:
