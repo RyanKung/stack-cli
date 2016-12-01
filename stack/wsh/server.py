@@ -15,7 +15,7 @@ import sys
 
 __all__ = ['router']
 
-router = UrlDispatcher()
+router = UrlDispatcher(app=NotImplemented)
 
 
 def out(s: str):
@@ -77,7 +77,7 @@ def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
     app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
     app.router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
     print('running on pid %s' % os.getpid())
-    return web.run_app(app, host=host, port=port)
+    return web.run_app(app, host=host, port=int(port))
 
 
 if __name__ == '__main__':

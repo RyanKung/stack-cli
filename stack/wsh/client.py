@@ -21,14 +21,17 @@ class aioInput(object):
         return res
 
 
-async def ws_client(session, host='ws://127.0.0.1', port='8964', project='default'):
-    addr = 'ws://{host}:{port}/wsh/{project}'.format(host=host, port=port, project=project)
+async def ws_client(session, host='ws://127.0.0.1',
+                    port='8964', project='default', cmd=None):
+    addr = 'ws://{host}:{port}/wsh/{project}'.format(
+        host=host, port=port, project=project)
     async with session.ws_connect(addr) as ws:
+        if cmd:
+            ws.send_str(cmd)
         async for raw in aioInput():
-            ws.send_str(raw)
             async for msg in ws:
                 if msg.tp == aiohttp.MsgType.text:
-                    if msg.data == 'close cmd':
+                    if msg.data in ['close', 'quit', 'exit']:
                         await ws.close()
                         break
                     else:
@@ -40,13 +43,23 @@ async def ws_client(session, host='ws://127.0.0.1', port='8964', project='defaul
                 elif msg.tp == aiohttp.MsgType.error:
                     print(msg)
                     sys.exit(0)
+            ws.send_str(raw)
+    return ws
+
+async def fire(session, host='ws//127.0.0.1',
+               port='8964', project='default', cmd='help'):
+    addr = 'ws://{host}:{port}/wsh/{project}'.format(
+        host=host, port=port, project=project)
+    async with session.ws_connect(addr) as ws:
+        ws.send_str(cmd)
     return ws
 
 
-def main(host='127.0.0.1', port='8964', project='default'):
+def main(host='127.0.0.1', port='8964', project='default', cmd=None):
     loop = asyncio.get_event_loop()
     with aiohttp.ClientSession(loop=loop) as client:
-        loop.run_until_complete(ws_client(session=client, host=host, port=port, project=project))
+        loop.run_until_complete(ws_client(
+            session=client, host=host, port=port, project=project, cmd=cmd))
 
 if __name__ == '__main__':
     main()

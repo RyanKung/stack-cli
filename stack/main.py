@@ -1,7 +1,6 @@
 # coding: utf8
 import os
 import sys
-import time
 import sysconfig
 import daemon
 import lockfile
@@ -90,31 +89,32 @@ def commands() -> str:
 def wsh(args) -> None:
     '''
     Run websocket based server
-    @argument --server, metavar=server, default=1, help=run as server
-    @argument --client, metavar=client, help=run as client
+    @argument --server, metavar=server, default=1, help=run as server, action=store_true
+    @argument --client, metavar=client, help=run as client, action=store_true
     @argument --host, metavar=host, default=127.0.0.1, help=host
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
-    @argument --daemon, default=0, help=run server with daemo mode
+    @argument --daemon, help=run server with daemo mode, action=store_true
     @arugment --working_path, default='./'
-    @argument -v, --verbose, default=0
+    @argument -v, --verbose, action=store_true
     @argument --pidfile, default='./daemon.pid'
-    @argument --logfile, default='0'
+    @argument --logfile, default=0
+    @argument -c, --cmd
     '''
 
     runserver = partial(server, host=args.host, port=args.port, pattern=wsh_pattern, project=args.project)
-
     if args.project != 'default':
         parse_stackfile('%s/stackfile.py' % args.project)
     if args.client:
-        return client(host=args.host, port=args.port, project=args.project)
+        return client(host=args.host, port=args.port,
+                      project=args.project, cmd=getattr(args, 'cmd', None))
     if args.server:
-        if bool(int(args.daemon)):
+        if args.daemon:
             argv = dict(
                 stderr=sys.stderr,
                 pidfile=lockfile.FileLock(args.pidfile)
             )
-            if bool(int(args.verbose)):
+            if args.verbose:
                 argv.update({'stdout': sys.stdout})
             if not args.logfile == '0':
                 logfile = open("args.logfile", "r", encoding="utf-8")
