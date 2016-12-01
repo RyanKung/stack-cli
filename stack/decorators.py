@@ -87,7 +87,7 @@ def command_argument_paraser(fn: Callable, parser: ArgumentParser) -> list:
         apply the argument
         '''
         args, kwargs = parse_doc(param)
-        parser.add_argument(*args, **kwargs, type=str)
+        parser.add_argument(*args, **kwargs)
         return parser
 
     docs = tuple(map(doc_parser, filter(bool, fn.__doc__.split('\n'))))

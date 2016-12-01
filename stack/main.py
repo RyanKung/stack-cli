@@ -89,8 +89,8 @@ def commands() -> str:
 def wsh(args) -> None:
     '''
     Run websocket based server
-    @argument --server, metavar=server, default=1, help=run as server, action=store_true
-    @argument --client, metavar=client, help=run as client, action=store_true
+    @argument --server, help=run as server, action=store_true
+    @argument --client, help=run as client, action=store_true
     @argument --host, metavar=host, default=127.0.0.1, help=host
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
@@ -109,12 +109,12 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port,
                       project=args.project, cmd=getattr(args, 'cmd', None))
     if args.server:
-        if args.daemon:
+        if bool(int(args.daemon)):
             argv = dict(
                 stderr=sys.stderr,
                 pidfile=lockfile.FileLock(args.pidfile)
             )
-            if args.verbose:
+            if bool(int(args.verbose)):
                 argv.update({'stdout': sys.stdout})
             if not args.logfile == '0':
                 logfile = open("args.logfile", "r", encoding="utf-8")
