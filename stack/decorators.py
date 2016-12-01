@@ -116,7 +116,7 @@ def as_command_wrapper(fn: Callable, parser: ArgumentParser, mdict={}) -> Callab
     return handler
 
 
-def as_wsh_command_wrapper(fn: Callable, mdict={}) -> Callable:
+def as_wsh_command_wrapper(fn: Callable, mdict={}, kind='str') -> Callable:
     '''
     mark a function as wsh command
     '''
@@ -124,7 +124,10 @@ def as_wsh_command_wrapper(fn: Callable, mdict={}) -> Callable:
 
     @wraps(fn)
     def handler(*args: Iterable, **kwargs: dict) -> Callable:
-        fn(*args, **kwargs)
+        if kind == 'list':
+            fn(args)
+        else:
+            fn(*args, **kwargs)
 
     return handler
 
