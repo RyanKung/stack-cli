@@ -29,7 +29,7 @@ from argparse import ArgumentParser
 
 __all__ = ['__version__', 'parser', 'as_command', 'pattern']
 
-__version__ = '0.2.10b2'
+__version__ = '0.2.11'
 pattern = {}
 wsh_pattern = {}
 parser = ArgumentParser(description='Stack-cli - The Python Tool Stack-cli %s' % __version__)
