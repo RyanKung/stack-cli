@@ -11,6 +11,7 @@ from typing import Callable
 from functools import partial
 from ..utils import io_echo
 from io import StringIO
+from functools import wraps
 import sys
 
 __all__ = ['router']
@@ -36,7 +37,7 @@ def command_parser(cmd: str, fns: dict) -> Callable:
     fn_name = args[0]
     fn = fns.get(fn_name, None)
     if not fn:
-        return partial(lambda: print(NotImplemented))
+        return wraps(print)(partial(lambda: print(NotImplemented)))
 
     if fn.strict:
         args = [i for i in args[1:] if not i.startswith('-')]
@@ -44,37 +45,47 @@ def command_parser(cmd: str, fns: dict) -> Callable:
         return partial(fns.get(fn_name, lambda: 'None'), *args, **kwargs)
     else:
         args = args[1:]
-#        kwargs = dict([i.split('=') for i in args[1:]])
-        return partial(fn, *args)
+        return wraps(fn)(partial(fn, *args))
 
 
-def io_wrapper(fn: Callable, callback: Callable) -> str:
+def io_wrapper(fn: Callable, callback: Callable, ws) -> str:
     outio = StringIO()
     errio = StringIO()
     sys.stderr = errio
     sys.stdout = outio
+    try:
+        fn.__wrapped__.ws = ws
+    except:
+        pass
     res = fn() or outio.getvalue() + errio.getvalue()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-    ret = callback(res)
     outio.close()
     errio.close()
     del outio
     del errio
-    return res, ret
+    try:
+        if fn.__wrapped__.async:
+            return
+    except:
+        pass
+    return callback(res)
+
 
 async def wsh(request, handler=print, project='default'):
     project = request.match_info.get('project', project)
     ws = web.WebSocketResponse()
+
+    def send(ws, text):
+        ws.send_str(text)
+        ws.send_str('\0')
+
     await ws.prepare(request)
     async for msg in ws:
         if msg.tp == web.MsgType.text:
-            try:
-                io_wrapper(handler(msg.data), callback=ws.send_str)
-            except Exception as ex:
-                io_wrapper(partial(print, ex), callback=ws.send_str)
+            io_wrapper(handler(msg.data), callback=partial(send, ws), ws=ws)
         elif msg.tp == web.MsgType.binary:
-            ws.send_bytes(msg.data)
+            io_wrapper(handler(msg.data.decode()), callback=ws.send_str, ws=ws)
         elif msg.tp == web.MsgType.close:
             print('websocket connection closed')
     return ws
@@ -90,8 +101,10 @@ async def api(request, handler=print, project='default'):
 def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
     loop = asyncio.get_event_loop()
     app = web.Application(router=router, debug=True, loop=loop)
-    app.router.add_route('GET', '/wsh/{project}', partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
-    app.router.add_route('GET', '/api/{project}', partial(api, project=project, handler=partial(command_parser, fns=pattern)))
+    app.router.add_route('GET', '/wsh/{project}',
+                         partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
+    app.router.add_route('GET', '/api/{project}',
+                         partial(api, project=project, handler=partial(command_parser, fns=pattern)))
     print('running on pid %s' % os.getpid())
     return web.run_app(app, host=host, port=int(port))
 
