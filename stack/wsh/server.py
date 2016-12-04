@@ -8,6 +8,7 @@ from aiohttp import MultiDict
 from aiohttp.web_urldispatcher import UrlDispatcher
 from urllib.parse import parse_qsl
 from typing import Callable
+from types import CoroutineType
 from functools import partial
 from ..utils import io_echo
 from io import StringIO
@@ -17,6 +18,7 @@ import sys
 __all__ = ['router']
 
 router = UrlDispatcher(app=NotImplemented)
+print = partial(print, file=sys.__stdout__)
 
 
 def out(s: str):
@@ -48,6 +50,67 @@ def command_parser(cmd: str, fns: dict) -> Callable:
         return wraps(fn)(partial(fn, *args))
 
 
+class AioIOWrapper(object):
+    def __init__(self, fn):
+        self.stderr = StringIO()
+        self.stdout = StringIO()
+        self.fn = fn
+        self.is_async = False
+        self.done = False
+
+    async def io_wrapper(self, fn):
+        sys.stdout = self.stdout
+        sys.stderr = self.stderr
+        res = fn()
+        if isinstance(res, CoroutineType):
+            self.is_async = True
+            return res
+        else:
+            res and self.stdout.write(res)  # for returning `str` and `None` case
+            self.stdout.write('EOF')
+
+    def getout(self):
+        out = self.stdout.getvalue()
+        err = self.stderr.getvalue()
+        res = out or err
+        if res:
+            return res
+
+    def flush(self):
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        self.stdout.close()
+        self.stderr.close()
+
+    async def __aiter__(self):
+        self.called = await self.io_wrapper(self.fn)
+        return self
+
+    async def __anext__(self):
+        if self.stdout.closed:
+            raise StopAsyncIteration
+        raw = self.getout()
+        if not raw:
+            await asyncio.sleep(0.5)
+        if 'EOF' not in raw:  # ignore '\0` case
+            return raw
+        else:
+            self.done = True
+            res = raw[:-3]
+            self.flush()
+            return res
+
+    @staticmethod
+    async def run(fn, sock):
+        if fn.__wrapped__:
+            fn.__wrapped__.ws = sock
+        called = AioIOWrapper(fn)
+        async for out in called:
+            out and sock.send_str(out)
+        if not called.is_async:
+            sock.send_str('\0')
+
+
 def io_wrapper(fn: Callable, callback: Callable, ws) -> str:
     outio = StringIO()
     errio = StringIO()
@@ -57,6 +120,7 @@ def io_wrapper(fn: Callable, callback: Callable, ws) -> str:
         fn.__wrapped__.ws = ws
     except:
         pass
+
     res = fn() or outio.getvalue() + errio.getvalue()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
@@ -83,9 +147,9 @@ async def wsh(request, handler=print, project='default'):
     await ws.prepare(request)
     async for msg in ws:
         if msg.tp == web.MsgType.text:
-            io_wrapper(handler(msg.data), callback=partial(send, ws), ws=ws)
+            await AioIOWrapper.run(fn=handler(msg.data), sock=ws)
         elif msg.tp == web.MsgType.binary:
-            io_wrapper(handler(msg.data.decode()), callback=ws.send_str, ws=ws)
+            await AioIOWrapper.run(fn=handler(msg.data), sock=ws)
         elif msg.tp == web.MsgType.close:
             print('websocket connection closed')
     return ws
