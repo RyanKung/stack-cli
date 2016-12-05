@@ -161,8 +161,8 @@ async def api(request, handler=print, project='default'):
 
 
 def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
-    loop = asyncio.get_event_loop()
-    app = web.Application(router=router, debug=True, loop=loop)
+    loop = asyncio.new_event_loop()
+    app = web.Application(router=router, loop=loop)
     app.router.add_route('GET', '/wsh/{project}',
                          partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
     app.router.add_route('GET', '/api/{project}',

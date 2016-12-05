@@ -95,10 +95,9 @@ def wsh(args) -> None:
     @argument --port, metavar=port, default=8964, help=port
     @argument --project, metavar=project, default=default, help=the project path
     @argument --daemon, help=run server with daemo mode, action=store_true
-    @arugment --working_path, default='./'
     @argument -v, --verbose, action=store_true
-    @argument --pidfile, default='./daemon.pid'
-    @argument --logfile, default=0
+    @argument --pidfile
+    @argument --logfile
     @argument -c, --cmd
     '''
 
@@ -112,11 +111,12 @@ def wsh(args) -> None:
         if bool(int(args.daemon)):
             argv = dict(
                 stderr=sys.stderr,
-                pidfile=lockfile.FileLock(args.pidfile)
             )
-            if bool(int(args.verbose)):
+            if args.pidfile:
+                argv.update(dict(pidfile=lockfile.FileLock(args.pidfile)))
+            if args.verbose:
                 argv.update({'stdout': sys.stdout})
-            if not args.logfile == '0':
+            if args.logfile:
                 logfile = open("args.logfile", "r", encoding="utf-8")
                 argv.update({'stderr': logfile})
                 argv.update({'stdout': logfile})
