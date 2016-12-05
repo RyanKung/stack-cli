@@ -111,12 +111,12 @@ def as_command_wrapper(fn: Callable, parser: ArgumentParser, mdict={}) -> Callab
     return fn
 
 
-def as_wsh_command_wrapper(fn: Callable, mdict={}, strict=True, async=False) -> Callable:
+def as_wsh_command_wrapper(fn: Callable, mdict={}, strict=True, is_coroutine=False) -> Callable:
     '''
     mark a function as wsh command
     '''
     fn.strict = strict
-    fn.async = async
+    fn.is_coroutine = is_coroutine
     command_argument_register(fn, mdict)
     return fn
 

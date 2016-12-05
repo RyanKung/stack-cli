@@ -108,7 +108,7 @@ def wsh(args) -> None:
         return client(host=args.host, port=args.port,
                       project=args.project, cmd=getattr(args, 'cmd', None))
     if args.server:
-        if bool(int(args.daemon)):
+        if args.daemon:
             argv = dict(
                 stderr=sys.stderr,
             )

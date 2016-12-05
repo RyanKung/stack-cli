@@ -55,7 +55,7 @@ class AioIOWrapper(object):
         self.stderr = StringIO()
         self.stdout = StringIO()
         self.fn = fn
-        self.is_async = False
+        self.check_coroutine(fn)
 
     async def __aiter__(self):
         self.called = await self.io_wrapper(self.fn)
@@ -79,11 +79,15 @@ class AioIOWrapper(object):
         sys.stderr = self.stderr
         res = fn()
         if isinstance(res, CoroutineType):
-            self.is_async = True
             return res
+        res and self.stdout.write(res)  # for returning `str` and `None` case
+        self.stdout.write('EOF')
+
+    def check_coroutine(self, fn):
+        if fn.__wrapped__ and getattr(fn.__wrapped__, 'is_coroutine'):
+            self.is_coroutine = True
         else:
-            res and self.stdout.write(res)  # for returning `str` and `None` case
-            self.stdout.write('EOF')
+            self.is_coroutine = False
 
     def read(self):
         out = self.stdout.getvalue()
@@ -103,9 +107,11 @@ class AioIOWrapper(object):
         if fn.__wrapped__:
             fn.__wrapped__.ws = sock
         called = AioIOWrapper(fn)
-        async for out in called:
-            out and sock.send_str(out)
-        if not called.is_async:
+        if called.is_coroutine:
+            await fn()
+        else:
+            async for out in called:
+                out and sock.send_str(out)
             sock.send_str('\0')
 
 
@@ -161,13 +167,13 @@ async def api(request, handler=print, project='default'):
 
 
 def main(host='127.0.0.1', port=8964, pattern={}, project='default'):
-    loop = asyncio.new_event_loop()
-    app = web.Application(router=router, loop=loop)
-    app.router.add_route('GET', '/wsh/{project}',
-                         partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
-    app.router.add_route('GET', '/api/{project}',
-                         partial(api, project=project, handler=partial(command_parser, fns=pattern)))
+    router.add_route('GET', '/wsh/{project}',
+                     partial(wsh, project=project, handler=partial(command_parser, fns=pattern)))
+    router.add_route('GET', '/api/{project}',
+                     partial(api, project=project, handler=partial(command_parser, fns=pattern)))
     print('running on pid %s' % os.getpid())
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    app = web.Application(router=router, loop=asyncio.get_event_loop())
     return web.run_app(app, host=host, port=int(port))
 
 
