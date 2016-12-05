@@ -84,7 +84,7 @@ class AioIOWrapper(object):
         self.stdout.write('EOF')
 
     def check_coroutine(self, fn):
-        if fn.__wrapped__ and getattr(fn.__wrapped__, 'is_coroutine'):
+        if hasattr(fn, '__wrapped__') and getattr(fn.__wrapped__, 'is_coroutine'):
             self.is_coroutine = True
         else:
             self.is_coroutine = False
@@ -104,7 +104,7 @@ class AioIOWrapper(object):
 
     @staticmethod
     async def run(fn, sock):
-        if fn.__wrapped__:
+        if hasattr(fn, '__wrapped__'):
             fn.__wrapped__.ws = sock
         called = AioIOWrapper(fn)
         if called.is_coroutine:
