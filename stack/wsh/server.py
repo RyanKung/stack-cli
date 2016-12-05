@@ -56,9 +56,25 @@ class AioIOWrapper(object):
         self.stdout = StringIO()
         self.fn = fn
         self.is_async = False
-        self.done = False
 
-    async def io_wrapper(self, fn):
+    async def __aiter__(self):
+        self.called = await self.io_wrapper(self.fn)
+        return self
+
+    async def __anext__(self):
+        if self.stdout.closed:
+            raise StopAsyncIteration
+        raw = self.read()
+        if not raw:
+            await asyncio.sleep(0.5)
+        if 'EOF' not in raw:  # ignore '\0` case
+            return raw
+        else:
+            res = raw[:-3]
+            self.flush()
+            return res
+
+    async def io_wrapper(self, fn: [Callable, CoroutineType]):
         sys.stdout = self.stdout
         sys.stderr = self.stderr
         res = fn()
@@ -69,7 +85,7 @@ class AioIOWrapper(object):
             res and self.stdout.write(res)  # for returning `str` and `None` case
             self.stdout.write('EOF')
 
-    def getout(self):
+    def read(self):
         out = self.stdout.getvalue()
         err = self.stderr.getvalue()
         res = out or err
@@ -81,24 +97,6 @@ class AioIOWrapper(object):
         sys.stderr = sys.__stderr__
         self.stdout.close()
         self.stderr.close()
-
-    async def __aiter__(self):
-        self.called = await self.io_wrapper(self.fn)
-        return self
-
-    async def __anext__(self):
-        if self.stdout.closed:
-            raise StopAsyncIteration
-        raw = self.getout()
-        if not raw:
-            await asyncio.sleep(0.5)
-        if 'EOF' not in raw:  # ignore '\0` case
-            return raw
-        else:
-            self.done = True
-            res = raw[:-3]
-            self.flush()
-            return res
 
     @staticmethod
     async def run(fn, sock):
