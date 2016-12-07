@@ -16,13 +16,15 @@ class aioInput(object):
             raise StopAsyncIteration
 
     async def get_input(self):
-        res = input('In: ')
+        res = input('\33[92mIn: \033[00m|')
         return res
 
 async def listen_ws(ws):
     async for msg in ws:
         if msg.tp == aiohttp.MsgType.text:
-            sys.stdout.write(msg.data)
+            sys.stdout.write("%s" % msg.data)
+        if msg.tp == aiohttp.MsgType.binary:
+            sys.stdout.write("%s" % str(msg.data))
         elif msg.tp == aiohttp.MsgType.closed:
             print(msg)
             sys.exit(1)
