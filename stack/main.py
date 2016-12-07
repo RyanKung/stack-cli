@@ -106,7 +106,8 @@ def wsh(args) -> None:
         parse_stackfile('%s/stackfile.py' % args.project)
     if args.client:
         return client(host=args.host, port=args.port,
-                      project=args.project, cmd=getattr(args, 'cmd', None))
+                      project=args.project,
+                      cmd=getattr(args, 'cmd', None))
     if args.server:
         if args.daemon:
             argv = dict(

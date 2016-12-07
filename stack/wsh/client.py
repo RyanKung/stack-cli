@@ -19,20 +19,21 @@ class aioInput(object):
         res = input('\33[92mIn: \033[00m|')
         return res
 
-async def listen_ws(ws):
+async def listen_ws(ws, repl=True):
     async for msg in ws:
         if msg.tp == aiohttp.MsgType.text:
             sys.stdout.write("%s" % msg.data)
         if msg.tp == aiohttp.MsgType.binary:
             sys.stdout.write("%s" % str(msg.data))
         elif msg.tp == aiohttp.MsgType.closed:
-            print(msg)
             sys.exit(1)
         elif msg.tp == aiohttp.MsgType.error:
             print(msg)
             break
         if msg.data == '\0':
             await listen_kbd(ws)
+        if msg.data == 'quit':
+            sys.exit(1)
 
 
 async def listen_kbd(ws):
@@ -48,7 +49,7 @@ async def ws_client(session, host='ws://127.0.0.1',
     async with session.ws_connect(addr) as ws:
         if cmd:
             ws.send_str(cmd)
-            await listen_ws(ws)
+            await listen_ws(ws, repl=False)
         else:
             await listen_kbd(ws)
     return ws
@@ -58,7 +59,9 @@ def main(host='127.0.0.1', port='8964', project='default', cmd=None):
     loop = asyncio.get_event_loop()
     with aiohttp.ClientSession(loop=loop) as client:
         loop.run_until_complete(ws_client(
-            session=client, host=host, port=port, project=project, cmd=cmd))
+            session=client, host=host,
+            port=port, project=project,
+            cmd=cmd))
 
 if __name__ == '__main__':
     main()
